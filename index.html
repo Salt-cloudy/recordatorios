@@ -1143,13 +1143,14 @@ async function submitTask() {
   if (editingId) {
     const t = tasks.find(x => x.id === editingId);
     if (t) { Object.assign(t, { title, date, time, cat, pri }); }
+    const _idUpdate = editingId;
     closeAddTask();
     refreshProgress(); refreshStats(); refreshCats(); render();
     try {
       await fetch(SCRIPT_URL, {
         method: 'POST', mode: 'no-cors',
         headers: { 'Content-Type': 'text/plain' },
-        body: JSON.stringify({ action: 'update', id: editingId, title, date, time, cat, pri })
+        body: JSON.stringify({ action: 'update', id: _idUpdate, title, date, time, cat, pri })
       });
     } catch(e) {}
   } else {
