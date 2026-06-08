@@ -754,7 +754,7 @@ function mkCard(t, delay) {
   const tl=timeLeft(t), ov=isOverdue(t);
   return `<div class="card${t.done?" done":""}${ov&&!t.done?" overdue":""}"
     style="--c:${cc};animation-delay:${delay||0}s" onclick="cardClick('${t.id}')"
-    ontouchstart="startLP(event,'${t.id}')" ontouchmove="cancelLP()" ontouchend="cancelLP()">
+    ontouchstart="startLP(event,'${t.id}')" ontouchmove="cancelLP(event)" ontouchend="cancelLP()">
     <div class="chk" id="chk_${t.id}"><span class="chk-mark">✓</span></div>
     <div class="card-body">
       <div class="card-top">
@@ -1027,11 +1027,22 @@ function cardClick(id) {
     _ct = setTimeout(() => { _ct = null; toggle(id); }, 240);
   }
 }
+let _lpX = 0, _lpY = 0;
 function startLP(e, id) {
   _lpFired = false;
+  _lpX = e.touches[0].clientX;
+  _lpY = e.touches[0].clientY;
   _lp = setTimeout(() => { _lpFired = true; _lp = null; openEditTask(id); }, 600);
 }
-function cancelLP() { if (_lp) { clearTimeout(_lp); _lp = null; } }
+function cancelLP(e) {
+  if (!_lp) return;
+  if (e && e.touches) {
+    const dx = e.touches[0].clientX - _lpX;
+    const dy = e.touches[0].clientY - _lpY;
+    if (Math.sqrt(dx*dx + dy*dy) < 10) return;
+  }
+  clearTimeout(_lp); _lp = null;
+}
 
 function openEditTask(id) {
   const t = tasks.find(x => x.id === id); if (!t) return;
