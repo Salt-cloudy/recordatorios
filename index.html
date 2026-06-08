@@ -218,6 +218,19 @@ h1 {
 .badge { font-size:.66rem; font-weight:600; padding:2px 8px; border-radius:50px; border:1px solid; }
 .timebadge { font-size:.74rem; color:var(--sub); }
 
+/* DELETE BUTTON */
+.card-del {
+  position:absolute; top:8px; right:8px;
+  width:24px; height:24px; border-radius:7px;
+  background:transparent; border:none;
+  color:var(--sub); font-size:.78rem; cursor:pointer;
+  display:flex; align-items:center; justify-content:center;
+  opacity:0; transition:all .18s; flex-shrink:0;
+}
+.card:hover .card-del { opacity:1; }
+.card-del:hover { background:rgba(248,113,113,.18); color:var(--red); }
+@media(max-width:640px){ .card-del { opacity:.35; } }
+
 /* EMPTY */
 .empty { text-align:center; padding:56px 20px; color:var(--sub); }
 .empty-ico { font-size:3rem; margin-bottom:14px; }
@@ -761,7 +774,9 @@ function mkCard(t, delay) {
         <span class="badge" style="color:${cc};border-color:${cc}">${t.cat}</span>
         <span class="badge" style="color:${pc};border-color:${pc}">${t.pri}</span>
       </div>
-    </div></div>`;
+    </div>
+    <button class="card-del" onclick="event.stopPropagation();deleteTask('${t.id}')" title="Eliminar">✕</button>
+  </div>`;
 }
 
 function section(label, arr, d) {
@@ -958,6 +973,21 @@ async function toggle(id) {
       body: JSON.stringify({action:'toggle', id, done:t.done})
     });
   } catch(e) { /* actualización local guardada, se sincronizará al recargar */ }
+}
+
+async function deleteTask(id) {
+  const idx = tasks.findIndex(t => t.id === id);
+  if (idx === -1) return;
+  tasks.splice(idx, 1);
+  refreshProgress(); refreshStats(); refreshCats();
+  if (F === 'cal') renderDayDetail(); else render();
+  try {
+    await fetch(SCRIPT_URL, {
+      method: 'POST', mode: 'no-cors',
+      headers: { 'Content-Type': 'text/plain' },
+      body: JSON.stringify({ action: 'delete', id })
+    });
+  } catch(e) {}
 }
 
 function setF(f) {
