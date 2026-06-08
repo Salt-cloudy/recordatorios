@@ -335,6 +335,110 @@ body.cal-mode .cat-row { display:none; }
   .cal-dayname { font-size:.58rem; padding-bottom:8px; }
 }
 
+/* ── LOCK SCREEN ── */
+#lock-screen {
+  position:fixed; inset:0; z-index:9999; background:var(--bg);
+  display:none; align-items:center; justify-content:center;
+  transition:background .35s;
+}
+#lock-card {
+  background:var(--surface); border:1px solid var(--border);
+  border-radius:20px; padding:44px 36px; max-width:360px;
+  width:90%; text-align:center; box-shadow:0 24px 64px rgba(0,0,0,.4);
+  transition:background .35s;
+}
+.lock-icon { font-size:2.4rem; margin-bottom:10px; }
+.lock-title {
+  font-size:1.7rem; font-weight:800; letter-spacing:-0.03em;
+  background:linear-gradient(130deg,var(--cyan),var(--purple));
+  -webkit-background-clip:text; -webkit-text-fill-color:transparent;
+  background-clip:text; margin-bottom:4px;
+}
+.lock-sub { color:var(--sub); font-size:.83rem; margin-bottom:28px; }
+.lock-label {
+  font-size:.7rem; font-weight:700; letter-spacing:.1em;
+  text-transform:uppercase; color:var(--sub);
+  text-align:left; margin-bottom:6px;
+}
+#lock-input {
+  width:100%; background:var(--s2); border:1px solid var(--border);
+  border-radius:12px; padding:12px 16px; color:var(--text);
+  font-family:'Inter',sans-serif; font-size:.95rem; outline:none;
+  margin-bottom:14px; transition:border-color .2s,background .35s;
+  letter-spacing:.12em;
+}
+#lock-input:focus { border-color:rgba(0,217,255,.5); }
+#lock-btn {
+  width:100%; padding:13px;
+  background:linear-gradient(135deg,var(--cyan),var(--purple));
+  border:none; border-radius:12px; color:#fff;
+  font-family:'Inter',sans-serif; font-size:.92rem; font-weight:700;
+  cursor:pointer; margin-bottom:10px; transition:opacity .15s;
+}
+#lock-btn:hover { opacity:.85; }
+#lock-error { color:var(--red); font-size:.8rem; min-height:18px; }
+
+/* ── ADD TASK MODAL ── */
+.modal-overlay {
+  position:fixed; inset:0; z-index:500;
+  background:rgba(0,0,0,.55); backdrop-filter:blur(6px);
+  display:none; align-items:center; justify-content:center; padding:20px;
+}
+.modal-overlay.open { display:flex; animation:fadeIn .2s ease; }
+@keyframes fadeIn { from{opacity:0;} to{opacity:1;} }
+.modal-card {
+  background:var(--surface); border:1px solid var(--border);
+  border-radius:18px; padding:24px; width:100%; max-width:420px;
+  box-shadow:0 20px 60px rgba(0,0,0,.4);
+  animation:slideUp .25s ease; transition:background .35s;
+}
+@keyframes slideUp { from{transform:translateY(20px);opacity:0;} to{transform:translateY(0);opacity:1;} }
+.modal-header { display:flex; justify-content:space-between; align-items:center; margin-bottom:20px; }
+.modal-title { font-size:1.1rem; font-weight:700; }
+.modal-close {
+  width:30px; height:30px; border-radius:8px;
+  background:var(--s2); border:1px solid var(--border);
+  color:var(--sub); cursor:pointer; font-size:.85rem;
+  display:flex; align-items:center; justify-content:center; transition:all .2s;
+}
+.modal-close:hover { border-color:rgba(248,113,113,.4); color:var(--red); }
+.form-group { margin-bottom:14px; }
+.form-label {
+  font-size:.7rem; font-weight:700; letter-spacing:.1em;
+  text-transform:uppercase; color:var(--sub); margin-bottom:5px; display:block;
+}
+.form-input, .form-select {
+  width:100%; background:var(--s2); border:1px solid var(--border);
+  border-radius:10px; padding:10px 13px; color:var(--text);
+  font-family:'Inter',sans-serif; font-size:.88rem; outline:none;
+  transition:border-color .2s,background .35s;
+}
+.form-select { cursor:pointer; }
+.form-input:focus, .form-select:focus { border-color:rgba(0,217,255,.4); }
+.form-row { display:grid; grid-template-columns:1fr 1fr; gap:10px; }
+.modal-submit {
+  width:100%; padding:12px;
+  background:linear-gradient(135deg,var(--cyan),var(--purple));
+  border:none; border-radius:12px; color:#fff;
+  font-family:'Inter',sans-serif; font-size:.9rem; font-weight:700;
+  cursor:pointer; margin-top:6px; transition:opacity .15s;
+}
+.modal-submit:hover { opacity:.85; }
+
+/* ── FAB ── */
+.fab {
+  position:fixed; right:20px; bottom:24px;
+  width:52px; height:52px; border-radius:50%;
+  background:linear-gradient(135deg,var(--cyan),var(--purple));
+  border:none; color:#fff; font-size:1.6rem; line-height:1;
+  cursor:pointer; z-index:300;
+  display:flex; align-items:center; justify-content:center;
+  box-shadow:0 6px 24px rgba(0,217,255,.35);
+  transition:transform .18s,box-shadow .18s;
+}
+.fab:hover { transform:scale(1.1); box-shadow:0 10px 32px rgba(0,217,255,.5); }
+@media(max-width:640px){ .fab { bottom:calc(64px + env(safe-area-inset-bottom) + 12px); } }
+
 /* ── BOTTOM NAV ── */
 .bnav { display:none; }
 @media(max-width:640px){
@@ -358,6 +462,20 @@ body.cal-mode .cat-row { display:none; }
 </style>
 </head>
 <body>
+
+<!-- LOCK SCREEN -->
+<div id="lock-screen">
+  <div id="lock-card">
+    <div class="lock-icon">🔒</div>
+    <div class="lock-title">Recordatorios</div>
+    <div class="lock-sub">Acceso privado</div>
+    <div class="lock-label">Contraseña</div>
+    <input type="password" id="lock-input" placeholder="••••••••"
+      onkeydown="if(event.key==='Enter')tryUnlock()" autocomplete="off">
+    <button id="lock-btn" onclick="tryUnlock()">Ingresar →</button>
+    <div id="lock-error"></div>
+  </div>
+</div>
 
 <canvas id="c"></canvas>
 <div class="orb" style="width:600px;height:600px;background:#00d9ff;top:-200px;right:-200px;opacity:.042;"></div>
@@ -428,6 +546,56 @@ body.cal-mode .cat-row { display:none; }
   <button id="nb3"               onclick="setF('todos')">  <span class="navi">📋</span>Todos</button>
   <button id="nb4"               onclick="setF('cal')">    <span class="navi">🗓</span>Calendario</button>
 </nav>
+
+<!-- ADD TASK MODAL -->
+<div id="add-modal" class="modal-overlay" onclick="if(event.target===this)closeAddTask()">
+  <div class="modal-card">
+    <div class="modal-header">
+      <div class="modal-title">Nueva tarea</div>
+      <button class="modal-close" onclick="closeAddTask()">✕</button>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Título *</label>
+      <input class="form-input" id="at-title" type="text" placeholder="¿Qué tienes que hacer?"
+        onkeydown="if(event.key==='Enter')submitTask()">
+    </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label class="form-label">Fecha *</label>
+        <input class="form-input" id="at-date" type="date">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Hora</label>
+        <input class="form-input" id="at-time" type="time">
+      </div>
+    </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label class="form-label">Categoría</label>
+        <select class="form-select" id="at-cat">
+          <option value="Universidad">Universidad</option>
+          <option value="Personal">Personal</option>
+          <option value="Salud">Salud</option>
+          <option value="Urgente">Urgente</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Prioridad</label>
+        <select class="form-select" id="at-pri">
+          <option value="media">Media</option>
+          <option value="alta">Alta</option>
+          <option value="crítica">Crítica</option>
+          <option value="baja">Baja</option>
+        </select>
+      </div>
+    </div>
+    <div id="at-error" style="color:var(--red);font-size:.8rem;margin-bottom:8px;min-height:18px;"></div>
+    <button class="modal-submit" onclick="submitTask()">Guardar tarea</button>
+  </div>
+</div>
+
+<!-- FAB -->
+<button class="fab" onclick="openAddTask()" title="Nueva tarea">+</button>
 
 <script>
 // ═══════════════════════ DATOS ════════════════════════════════
@@ -828,8 +996,85 @@ function loadTheme() {
   document.getElementById("btnLight").classList.toggle("active", saved==="light");
 }
 
+// ═══════════════════════ LOCK SCREEN ═════════════════════════
+const REC_HASH = '4cda198505150b800bd0898b13fc073871ce7e1b597bfa8339e92980ab5f5774';
+const REC_KEY  = 'rec_access';
+
+function checkAccess() {
+  const isGH = location.hostname.indexOf('github.io') !== -1;
+  if (!isGH) { hideLock(); return; }
+  try {
+    const a = JSON.parse(localStorage.getItem(REC_KEY) || 'null');
+    if (a && a.permanent) { hideLock(); return; }
+  } catch(e) {}
+  showLock();
+}
+function showLock() {
+  document.getElementById('lock-screen').style.display = 'flex';
+  setTimeout(() => document.getElementById('lock-input').focus(), 100);
+}
+function hideLock() { document.getElementById('lock-screen').style.display = 'none'; }
+async function sha256(msg) {
+  try {
+    const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(msg));
+    return Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2,'0')).join('');
+  } catch(e) { return ''; }
+}
+async function tryUnlock() {
+  const inp = document.getElementById('lock-input');
+  const err = document.getElementById('lock-error');
+  const val = inp.value.trim();
+  if (!val) return;
+  const h = await sha256(val);
+  if (h === REC_HASH) {
+    localStorage.setItem(REC_KEY, JSON.stringify({permanent: true}));
+    hideLock();
+    inp.value = ''; err.textContent = '';
+  } else {
+    err.textContent = 'Contraseña incorrecta';
+    inp.value = ''; inp.focus();
+  }
+}
+
+// ═══════════════════════ ENTRADA MANUAL ══════════════════════
+function openAddTask() {
+  document.getElementById('at-title').value = '';
+  document.getElementById('at-date').value  = TODAY;
+  document.getElementById('at-time').value  = '';
+  document.getElementById('at-cat').value   = 'Universidad';
+  document.getElementById('at-pri').value   = 'media';
+  document.getElementById('at-error').textContent = '';
+  document.getElementById('add-modal').classList.add('open');
+  setTimeout(() => document.getElementById('at-title').focus(), 60);
+}
+function closeAddTask() {
+  document.getElementById('add-modal').classList.remove('open');
+}
+async function submitTask() {
+  const title = document.getElementById('at-title').value.trim();
+  const date  = document.getElementById('at-date').value;
+  const time  = document.getElementById('at-time').value;
+  const cat   = document.getElementById('at-cat').value;
+  const pri   = document.getElementById('at-pri').value;
+  const errEl = document.getElementById('at-error');
+  if (!title) { errEl.textContent = 'El título es obligatorio'; return; }
+  if (!date)  { errEl.textContent = 'La fecha es obligatoria'; return; }
+  errEl.textContent = '';
+  tasks.push({ id: 'tmp_' + Date.now(), title, date, time, cat, pri, done: false });
+  refreshProgress(); refreshStats(); refreshCats(); render();
+  closeAddTask();
+  try {
+    await fetch(SCRIPT_URL, {
+      method: 'POST', mode: 'no-cors',
+      headers: { 'Content-Type': 'text/plain' },
+      body: JSON.stringify({ action: 'create', title, date, time, cat, pri })
+    });
+  } catch(e) { /* se sincronizará al recargar */ }
+}
+
 // ═══════════════════════ INIT ═════════════════════════════════
 (function init(){
+  checkAccess();
   loadTheme();
   const greet = NOW_H<12?"Buenos días":NOW_H<19?"Buenas tardes":"Buenas noches";
   document.getElementById("greeting").innerHTML=`${greet}, <em>Luis</em> 👋`;
