@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="es" data-theme="dark">
 <head>
 <meta charset="UTF-8">
@@ -451,6 +451,7 @@ body.cal-mode .cat-row { display:none; }
 }
 .fab:hover { transform:scale(1.1); box-shadow:0 10px 32px rgba(0,217,255,.5); }
 @media(max-width:640px){ .fab { bottom:calc(64px + env(safe-area-inset-bottom) + 12px); } }
+@media(min-width:641px){ .fab { display:none; } }
 
 /* ── BOTTOM NAV ── */
 .bnav { display:none; }
@@ -504,14 +505,17 @@ body.cal-mode .cat-row { display:none; }
       <h1>Recordatorios</h1>
       <p class="dateline"><span class="ldot"></span><span id="dateEl"></span></p>
     </div>
-    <div class="opts-anchor">
-      <button class="opts-btn" id="optsBtn" onclick="toggleOpts()">⚙</button>
-      <div class="opts-panel" id="optsPanel">
-        <div class="opts-title">Opciones</div>
-        <div class="opts-label">Tema</div>
-        <div class="theme-btns">
-          <button class="theme-btn" id="btnDark"  onclick="setTheme('dark')">🌙 Oscuro</button>
-          <button class="theme-btn" id="btnLight" onclick="setTheme('light')">☀️ Claro</button>
+    <div style="display:flex;gap:8px;align-items:flex-start;">
+      <button class="opts-btn" onclick="openAddTask()" title="Nueva tarea" style="font-size:1.3rem;line-height:1;font-weight:300;">+</button>
+      <div class="opts-anchor">
+        <button class="opts-btn" id="optsBtn" onclick="toggleOpts()">⚙</button>
+        <div class="opts-panel" id="optsPanel">
+          <div class="opts-title">Opciones</div>
+          <div class="opts-label">Tema</div>
+          <div class="theme-btns">
+            <button class="theme-btn" id="btnDark"  onclick="setTheme('dark')">🌙 Oscuro</button>
+            <button class="theme-btn" id="btnLight" onclick="setTheme('light')">☀️ Claro</button>
+          </div>
         </div>
       </div>
     </div>
@@ -541,6 +545,7 @@ body.cal-mode .cat-row { display:none; }
       <div class="tab"        data-f="manana" onclick="setF('manana')">Mañana</div>
       <div class="tab"        data-f="semana" onclick="setF('semana')">Esta semana</div>
       <div class="tab"        data-f="todos"  onclick="setF('todos')">Todos</div>
+      <div class="tab"        data-f="hecho"  onclick="setF('hecho')">Hecho</div>
       <div class="tab"        data-f="cal"    onclick="setF('cal')">Calendario</div>
     </div>
     <div class="cat-row" id="catRow"></div>
@@ -553,18 +558,19 @@ body.cal-mode .cat-row { display:none; }
 
 <!-- MOBILE NAV -->
 <nav class="bnav">
-  <button id="nb0" class="active" onclick="setF('hoy')">  <span class="navi">⏰</span>Hoy</button>
-  <button id="nb1"               onclick="setF('manana')"> <span class="navi">🌅</span>Mañana</button>
-  <button id="nb2"               onclick="setF('semana')"> <span class="navi">📆</span>Semana</button>
-  <button id="nb3"               onclick="setF('todos')">  <span class="navi">📋</span>Todos</button>
-  <button id="nb4"               onclick="setF('cal')">    <span class="navi">🗓</span>Calendario</button>
+  <button id="nb0" class="active" onclick="setF('hoy')">   <span class="navi">⏰</span>Hoy</button>
+  <button id="nb1"               onclick="setF('manana')">  <span class="navi">🌅</span>Mañana</button>
+  <button id="nb2"               onclick="setF('semana')">  <span class="navi">📆</span>Semana</button>
+  <button id="nb3"               onclick="setF('todos')">   <span class="navi">📋</span>Todos</button>
+  <button id="nb4"               onclick="setF('hecho')">   <span class="navi">✅</span>Hecho</button>
+  <button id="nb5"               onclick="setF('cal')">     <span class="navi">🗓</span>Calendario</button>
 </nav>
 
 <!-- ADD TASK MODAL -->
 <div id="add-modal" class="modal-overlay" onclick="if(event.target===this)closeAddTask()">
   <div class="modal-card">
     <div class="modal-header">
-      <div class="modal-title">Nueva tarea</div>
+      <div class="modal-title" id="modal-title-text">Nueva tarea</div>
       <button class="modal-close" onclick="closeAddTask()">✕</button>
     </div>
     <div class="form-group">
@@ -697,7 +703,7 @@ function isOverdue(t) {
 }
 
 // ═══════════════════════ ESTADO ═══════════════════════════════
-let F = "hoy", CAT = "todas", Q = "";
+let F = "hoy", CAT = "todas", Q = "", editingId = null;
 let calYear = _NOW.getFullYear(), calMonth = _NOW.getMonth(), calSelectedDate = TODAY;
 
 function getList() {
@@ -762,7 +768,8 @@ function mkCard(t, delay) {
   const cc=CAT_C[t.cat]||"var(--cyan)", pc=PRI_C[t.pri]||"var(--sub)";
   const tl=timeLeft(t), ov=isOverdue(t);
   return `<div class="card${t.done?" done":""}${ov&&!t.done?" overdue":""}"
-    style="--c:${cc};animation-delay:${delay||0}s" onclick="toggle('${t.id}')">
+    style="--c:${cc};animation-delay:${delay||0}s" onclick="cardClick('${t.id}')"
+    ontouchstart="startLP(event,'${t.id}')" ontouchmove="cancelLP()" ontouchend="cancelLP()">
     <div class="chk" id="chk_${t.id}"><span class="chk-mark">✓</span></div>
     <div class="card-body">
       <div class="card-top">
@@ -791,6 +798,7 @@ function render() {
   const el = document.getElementById("content");
 
   if (F === "cal") { renderCalendar(); return; }
+  if (F === "hecho") { renderHecho(); return; }
 
   const list = getList();
   if (!list.length) {
@@ -844,7 +852,7 @@ function renderCalendar() {
   // Calcular primer y último día del mes
   const firstDay = new Date(calYear, calMonth, 1);
   const lastDate  = new Date(calYear, calMonth+1, 0).getDate();
-  const startDow  = (firstDay.getDay()+6)%7; // Lun=0
+  const startDow  = firstDay.getDay(); // Dom=0
 
   // Días del mes anterior para completar primera fila
   const prevLastDate = new Date(calYear, calMonth, 0).getDate();
@@ -857,7 +865,7 @@ function renderCalendar() {
   const nextMonth  = calMonth===11 ? 0 : calMonth+1;
   const nextYear   = calMonth===11 ? calYear+1 : calYear;
 
-  const dayNames = ["Lun","Mar","Mié","Jue","Vie","Sáb","Dom"];
+  const dayNames = ["Dom","Lun","Mar","Mié","Jue","Vie","Sáb"];
 
   let gridHtml = dayNames.map(d=>`<div class="cal-dayname">${d}</div>`).join("");
 
@@ -957,6 +965,26 @@ function renderDayDetail() {
   el.innerHTML = html;
 }
 
+// ═══════════════════════ HECHO ══════════════════════════════════
+function renderHecho() {
+  const el = document.getElementById("content");
+  const curPrefix = `${_NOW.getFullYear()}-${_pad(_NOW.getMonth()+1)}`;
+  let list = tasks.filter(t => t.done && t.date.startsWith(curPrefix));
+  if (CAT !== "todas") list = list.filter(t => t.cat === CAT);
+  if (Q) { const q = Q.toLowerCase(); list = list.filter(t => t.title.toLowerCase().includes(q) || t.cat.toLowerCase().includes(q)); }
+  if (!list.length) {
+    el.innerHTML = `<div class="empty"><div class="empty-ico">✅</div><div class="empty-ttl">Sin tareas completadas</div><div class="empty-sub">Aún no has completado tareas este mes</div></div>`;
+    return;
+  }
+  const groups = {};
+  list.forEach(t => (groups[t.date] = groups[t.date] || []).push(t));
+  let html = "", d = 0;
+  for (const [date, arr] of Object.entries(groups).sort((a,b) => a[0].localeCompare(b[0]))) {
+    html += section(fmtDate(date), arr, d); d += arr.length * .05;
+  }
+  el.innerHTML = html;
+}
+
 // ═══════════════════════ INTERACCIONES ════════════════════════
 async function toggle(id) {
   const t = tasks.find(x=>x.id===id); if(!t) return;
@@ -976,6 +1004,7 @@ async function toggle(id) {
 }
 
 async function deleteTask(id) {
+  if (!confirm('¿Eliminar esta tarea?')) return;
   const idx = tasks.findIndex(t => t.id === id);
   if (idx === -1) return;
   tasks.splice(idx, 1);
@@ -993,7 +1022,7 @@ async function deleteTask(id) {
 function setF(f) {
   F = f;
   document.querySelectorAll(".tab").forEach(t=>t.classList.toggle("active",t.dataset.f===f));
-  ["hoy","manana","semana","todos","cal"].forEach((v,i)=>{
+  ["hoy","manana","semana","todos","hecho","cal"].forEach((v,i)=>{
     const b=document.getElementById("nb"+i); if(b) b.classList.toggle("active",v===f);
   });
   document.body.classList.toggle("cal-mode", f==="cal");
@@ -1001,6 +1030,37 @@ function setF(f) {
 }
 
 function onSearch(v) { Q=v.trim(); render(); }
+
+// ═══════════════════════ EDITAR ═════════════════════════════════
+let _ct = null, _lp = null, _lpFired = false;
+function cardClick(id) {
+  if (_lpFired) { _lpFired = false; return; }
+  if (_ct) {
+    clearTimeout(_ct); _ct = null;
+    openEditTask(id);
+  } else {
+    _ct = setTimeout(() => { _ct = null; toggle(id); }, 240);
+  }
+}
+function startLP(e, id) {
+  _lpFired = false;
+  _lp = setTimeout(() => { _lpFired = true; _lp = null; openEditTask(id); }, 600);
+}
+function cancelLP() { if (_lp) { clearTimeout(_lp); _lp = null; } }
+
+function openEditTask(id) {
+  const t = tasks.find(x => x.id === id); if (!t) return;
+  editingId = id;
+  document.getElementById('modal-title-text').textContent = 'Editar tarea';
+  document.getElementById('at-title').value = t.title;
+  document.getElementById('at-date').value  = t.date;
+  document.getElementById('at-time').value  = t.time || '';
+  document.getElementById('at-cat').value   = t.cat;
+  document.getElementById('at-pri').value   = t.pri;
+  document.getElementById('at-error').textContent = '';
+  document.getElementById('add-modal').classList.add('open');
+  setTimeout(() => document.getElementById('at-title').focus(), 60);
+}
 
 // ═══════════════════════ OPCIONES ═════════════════════════════
 function toggleOpts() {
@@ -1037,6 +1097,7 @@ function checkAccess() {
     const a = JSON.parse(localStorage.getItem(REC_KEY) || 'null');
     if (a && a.permanent) { hideLock(); return; }
   } catch(e) {}
+  if (document.cookie.split(';').some(c => c.trim().startsWith(REC_KEY + '='))) { hideLock(); return; }
   showLock();
 }
 function showLock() {
@@ -1058,6 +1119,7 @@ async function tryUnlock() {
   const h = await sha256(val);
   if (h === REC_HASH) {
     localStorage.setItem(REC_KEY, JSON.stringify({permanent: true}));
+    document.cookie = REC_KEY + '=1; max-age=31536000; path=/; SameSite=Lax';
     hideLock();
     inp.value = ''; err.textContent = '';
   } else {
@@ -1068,6 +1130,8 @@ async function tryUnlock() {
 
 // ═══════════════════════ ENTRADA MANUAL ══════════════════════
 function openAddTask() {
+  editingId = null;
+  document.getElementById('modal-title-text').textContent = 'Nueva tarea';
   document.getElementById('at-title').value = '';
   document.getElementById('at-date').value  = TODAY;
   document.getElementById('at-time').value  = '';
@@ -1079,6 +1143,7 @@ function openAddTask() {
 }
 function closeAddTask() {
   document.getElementById('add-modal').classList.remove('open');
+  editingId = null;
 }
 async function submitTask() {
   const title = document.getElementById('at-title').value.trim();
@@ -1090,16 +1155,30 @@ async function submitTask() {
   if (!title) { errEl.textContent = 'El título es obligatorio'; return; }
   if (!date)  { errEl.textContent = 'La fecha es obligatoria'; return; }
   errEl.textContent = '';
-  tasks.push({ id: 'tmp_' + Date.now(), title, date, time, cat, pri, done: false });
-  refreshProgress(); refreshStats(); refreshCats(); render();
-  closeAddTask();
-  try {
-    await fetch(SCRIPT_URL, {
-      method: 'POST', mode: 'no-cors',
-      headers: { 'Content-Type': 'text/plain' },
-      body: JSON.stringify({ action: 'create', title, date, time, cat, pri })
-    });
-  } catch(e) { /* se sincronizará al recargar */ }
+  if (editingId) {
+    const t = tasks.find(x => x.id === editingId);
+    if (t) { Object.assign(t, { title, date, time, cat, pri }); }
+    closeAddTask();
+    refreshProgress(); refreshStats(); refreshCats(); render();
+    try {
+      await fetch(SCRIPT_URL, {
+        method: 'POST', mode: 'no-cors',
+        headers: { 'Content-Type': 'text/plain' },
+        body: JSON.stringify({ action: 'update', id: editingId, title, date, time, cat, pri })
+      });
+    } catch(e) {}
+  } else {
+    tasks.push({ id: 'tmp_' + Date.now(), title, date, time, cat, pri, done: false });
+    refreshProgress(); refreshStats(); refreshCats(); render();
+    closeAddTask();
+    try {
+      await fetch(SCRIPT_URL, {
+        method: 'POST', mode: 'no-cors',
+        headers: { 'Content-Type': 'text/plain' },
+        body: JSON.stringify({ action: 'create', title, date, time, cat, pri })
+      });
+    } catch(e) { /* se sincronizará al recargar */ }
+  }
 }
 
 // ═══════════════════════ INIT ═════════════════════════════════
