@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="es" data-theme="dark">
 <head>
 <meta charset="UTF-8">
@@ -434,15 +434,26 @@ body.cal-mode .cat-row { display:none; }
 const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbw1LoflM5gYnLHZ6a5fuqvnffdmXp_cUTQvpAs1NfroPeD0u-6V9O_SPt-UfAEvETk5/exec';
 let tasks = [];
 
+function loadTasksJSONP() {
+  return new Promise((resolve, reject) => {
+    const cb = '__rcb_' + Date.now();
+    const script = document.createElement('script');
+    const timer = setTimeout(() => { cleanup(); reject(new Error('Timeout — sin respuesta del servidor')); }, 12000);
+    function cleanup() {
+      clearTimeout(timer);
+      delete window[cb];
+      if (script.parentNode) script.parentNode.removeChild(script);
+    }
+    window[cb] = data => { cleanup(); resolve(data); };
+    script.onerror = () => { cleanup(); reject(new Error('No se pudo contactar al servidor')); };
+    script.src = SCRIPT_URL + '?callback=' + cb;
+    document.head.appendChild(script);
+  });
+}
+
 async function loadTasks() {
   try {
-    const res  = await fetch(SCRIPT_URL);
-    const text = await res.text();
-    let data;
-    try { data = JSON.parse(text); } catch(pe) {
-      showError('Respuesta inválida del servidor', text.slice(0,120));
-      return;
-    }
+    const data = await loadTasksJSONP();
     if (data.ok) {
       tasks = data.tasks;
       refreshProgress(); refreshStats(); refreshCats(); render();
@@ -450,7 +461,7 @@ async function loadTasks() {
       showError('Error del servidor', data.error || JSON.stringify(data).slice(0,100));
     }
   } catch(e) {
-    showError('Sin conexión al servidor', e.message || 'Abre la página desde HTTPS (GitHub Pages) para evitar bloqueos CORS');
+    showError('Sin conexión al servidor', e.message);
   }
 }
 
@@ -774,6 +785,7 @@ async function toggle(id) {
   try {
     await fetch(SCRIPT_URL, {
       method:'POST',
+      mode:'no-cors',
       headers:{'Content-Type':'text/plain'},
       body: JSON.stringify({action:'toggle', id, done:t.done})
     });
