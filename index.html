@@ -438,20 +438,7 @@ body.cal-mode .cat-row { display:none; }
 }
 .modal-submit:hover { opacity:.85; }
 
-/* ── FAB ── */
-.fab {
-  position:fixed; right:20px; bottom:24px;
-  width:52px; height:52px; border-radius:50%;
-  background:linear-gradient(135deg,var(--cyan),var(--purple));
-  border:none; color:#fff; font-size:1.6rem; line-height:1;
-  cursor:pointer; z-index:300;
-  display:flex; align-items:center; justify-content:center;
-  box-shadow:0 6px 24px rgba(0,217,255,.35);
-  transition:transform .18s,box-shadow .18s;
-}
-.fab:hover { transform:scale(1.1); box-shadow:0 10px 32px rgba(0,217,255,.5); }
-@media(max-width:640px){ .fab { bottom:calc(64px + env(safe-area-inset-bottom) + 12px); } }
-@media(min-width:641px){ .fab { display:none; } }
+
 
 /* ── BOTTOM NAV ── */
 .bnav { display:none; }
@@ -613,8 +600,6 @@ body.cal-mode .cat-row { display:none; }
   </div>
 </div>
 
-<!-- FAB -->
-<button class="fab" onclick="openAddTask()" title="Nueva tarea">+</button>
 
 <script>
 // ═══════════════════════ DATOS ════════════════════════════════
