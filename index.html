@@ -16,11 +16,11 @@
   --pink:#ff2d78; --orange:#ff7a30; --yellow:#fbbf24; --red:#f87171;
 }
 [data-theme="light"] {
-  --bg:#eef0fd; --surface:#ffffff; --s2:#e2e6f8;
-  --border:rgba(50,60,130,0.1); --text:#191b2e; --sub:#6870a0;
-  --shadow:rgba(80,90,180,0.12);
-  --cyan:#0088c4; --purple:#7a30d8; --green:#009f52;
-  --pink:#d4155e; --orange:#d4560c; --yellow:#b58800; --red:#d42020;
+  --bg:#f0f2fa; --surface:#ffffff; --s2:#e8eaf4;
+  --border:rgba(60,70,150,0.1); --text:#1a1d35; --sub:#6b7094;
+  --shadow:rgba(0,0,0,0.08);
+  --cyan:#4361ee; --purple:#7c3aed; --green:#16a34a;
+  --pink:#e11d48; --orange:#ea580c; --yellow:#ca8a04; --red:#dc2626;
 }
 
 body {
@@ -99,6 +99,41 @@ h1 {
 }
 .theme-btn:hover { border-color:rgba(0,217,255,.3); color:var(--text); }
 .theme-btn.active { background:rgba(0,217,255,.12); border-color:rgba(0,217,255,.5); color:var(--cyan); box-shadow:0 0 12px rgba(0,217,255,.15); }
+
+/* ── LIGHT THEME OVERRIDES — sin glows, colores propios ── */
+[data-theme="light"] .orb { opacity:0 !important; }
+[data-theme="light"] .ldot { box-shadow:none; }
+[data-theme="light"] .opts-btn:hover,
+[data-theme="light"] .opts-btn.open {
+  border-color:rgba(67,97,238,.35); color:var(--cyan);
+  box-shadow:0 2px 10px rgba(67,97,238,.1); background:rgba(67,97,238,.07);
+}
+[data-theme="light"] .theme-btn:hover { border-color:rgba(67,97,238,.3); color:var(--text); box-shadow:none; }
+[data-theme="light"] .theme-btn.active { background:rgba(67,97,238,.09); border-color:rgba(67,97,238,.45); color:var(--cyan); box-shadow:none; }
+[data-theme="light"] .prog-fill { box-shadow:none; }
+[data-theme="light"] .prog-pct { text-shadow:none; }
+[data-theme="light"] .stat::after { box-shadow:none; opacity:1; }
+[data-theme="light"] .stat-n { text-shadow:none; }
+[data-theme="light"] .search-input:focus { border-color:rgba(67,97,238,.4); box-shadow:0 0 0 3px rgba(67,97,238,.08); }
+[data-theme="light"] .tab:hover:not(.active) { border-color:rgba(67,97,238,.2); color:var(--text); }
+[data-theme="light"] .tab.active { background:rgba(67,97,238,.09); border-color:rgba(67,97,238,.45); color:var(--cyan); box-shadow:none; }
+[data-theme="light"] .tleft.today { background:rgba(67,97,238,.1); color:var(--cyan); }
+[data-theme="light"] .card::before { box-shadow:none; }
+[data-theme="light"] .card:hover { box-shadow:0 4px 20px rgba(0,0,0,.08); }
+[data-theme="light"] .card.done .chk { box-shadow:none; }
+[data-theme="light"] .cal-nav:hover { border-color:rgba(67,97,238,.35); color:var(--cyan); box-shadow:none; }
+[data-theme="light"] .cal-day.today { border-color:rgba(67,97,238,.45); background:rgba(67,97,238,.06); }
+[data-theme="light"] .cal-day.today .cal-num { color:var(--cyan); text-shadow:none; }
+[data-theme="light"] .cal-day.selected { box-shadow:0 2px 12px rgba(67,97,238,.15); }
+[data-theme="light"] .form-input:focus,
+[data-theme="light"] .form-select:focus { border-color:rgba(67,97,238,.4); box-shadow:0 0 0 3px rgba(67,97,238,.07); }
+[data-theme="light"] #lock-input:focus { border-color:rgba(67,97,238,.4); }
+[data-theme="light"] .alldone-ttl { text-shadow:none; }
+[data-theme="light"] .alldone-glow { background:none; }
+
+/* AMPM INPUT */
+.at-time-ampm-wrap { display:none; flex-direction:row; gap:6px; align-items:center; }
+.at-ampm-sel { width:76px; }
 
 /* PROGRESS */
 .progress-bar {
@@ -503,6 +538,11 @@ body.cal-mode .cat-row { display:none; }
             <button class="theme-btn" id="btnDark"  onclick="setTheme('dark')">🌙 Oscuro</button>
             <button class="theme-btn" id="btnLight" onclick="setTheme('light')">☀️ Claro</button>
           </div>
+          <div class="opts-label" style="margin-top:12px">Formato de hora</div>
+          <div class="theme-btns">
+            <button class="theme-btn" id="btnFmt24"   onclick="setTimeFmt('24h')">24 h</button>
+            <button class="theme-btn" id="btnFmtAmpm" onclick="setTimeFmt('ampm')">AM / PM</button>
+          </div>
         </div>
       </div>
     </div>
@@ -573,6 +613,13 @@ body.cal-mode .cat-row { display:none; }
       <div class="form-group">
         <label class="form-label">Hora</label>
         <input class="form-input" id="at-time" type="time">
+        <div class="at-time-ampm-wrap" id="at-time-ampm-wrap">
+          <input class="form-input" id="at-time-hhmm" type="text" placeholder="12:00" style="flex:1;min-width:0">
+          <select class="form-select at-ampm-sel" id="at-ampm">
+            <option value="AM">AM</option>
+            <option value="PM">PM</option>
+          </select>
+        </div>
       </div>
     </div>
     <div class="form-row">
@@ -762,7 +809,7 @@ function mkCard(t, delay) {
         ${!t.done?`<span class="tleft ${tl.cls}">${tl.txt}</span>`:""}
       </div>
       <div class="card-meta">
-        ${t.time?`<span class="timebadge">⏰ ${t.time}</span>`:""}
+        ${t.time?`<span class="timebadge">⏰ ${formatTime(t.time)}</span>`:""}
         <span class="badge" style="color:${cc};border-color:${cc}">${t.cat}</span>
         <span class="badge" style="color:${pc};border-color:${pc}">${t.pri}</span>
       </div>
@@ -817,7 +864,7 @@ function render() {
 
   } else if (F==="todos") {
     const groups={};
-    list.forEach(t=>(groups[t.date]=groups[t.date]||[]).push(t));
+    list.filter(t=>!t.done).forEach(t=>(groups[t.date]=groups[t.date]||[]).push(t));
     for (const [date,arr] of Object.entries(groups).sort((a,b)=>a[0].localeCompare(b[0]))) {
       html+=section(fmtDate(date),arr,d); d+=arr.length*.05;
     }
@@ -1050,7 +1097,7 @@ function openEditTask(id) {
   document.getElementById('modal-title-text').textContent = 'Editar tarea';
   document.getElementById('at-title').value = t.title;
   document.getElementById('at-date').value  = t.date;
-  document.getElementById('at-time').value  = t.time || '';
+  setTimeInput(t.time || '');
   document.getElementById('at-cat').value   = t.cat;
   document.getElementById('at-pri').value   = t.pri;
   document.getElementById('at-error').textContent = '';
@@ -1080,6 +1127,76 @@ function loadTheme() {
   document.documentElement.setAttribute("data-theme",saved);
   document.getElementById("btnDark").classList.toggle("active",  saved==="dark");
   document.getElementById("btnLight").classList.toggle("active", saved==="light");
+}
+
+// ═══════════════════════ FORMATO DE HORA ══════════════════════
+let TIME_FMT = '24h';
+
+function setTimeFmt(fmt) {
+  TIME_FMT = fmt;
+  localStorage.setItem('time_fmt', fmt);
+  document.getElementById('btnFmt24').classList.toggle('active', fmt==='24h');
+  document.getElementById('btnFmtAmpm').classList.toggle('active', fmt==='ampm');
+  const is24 = fmt === '24h';
+  document.getElementById('at-time').style.display = is24 ? '' : 'none';
+  document.getElementById('at-time-ampm-wrap').style.display = is24 ? 'none' : 'flex';
+  render();
+}
+
+function loadTimeFmt() {
+  const saved = localStorage.getItem('time_fmt') || '24h';
+  TIME_FMT = saved;
+  document.getElementById('btnFmt24').classList.toggle('active', saved==='24h');
+  document.getElementById('btnFmtAmpm').classList.toggle('active', saved==='ampm');
+  const is24 = saved === '24h';
+  document.getElementById('at-time').style.display = is24 ? '' : 'none';
+  document.getElementById('at-time-ampm-wrap').style.display = is24 ? 'none' : 'flex';
+}
+
+function formatTime(t) {
+  if (!t) return '';
+  if (TIME_FMT === '24h') return t;
+  const [h, m] = t.split(':').map(Number);
+  const ampm = h >= 12 ? 'PM' : 'AM';
+  const h12  = h % 12 || 12;
+  return `${h12}:${String(m).padStart(2,'0')} ${ampm}`;
+}
+
+function getTimeInput() {
+  if (TIME_FMT === '24h') return document.getElementById('at-time').value;
+  const raw = document.getElementById('at-time-hhmm').value.trim();
+  if (!raw) return '';
+  const ampm = document.getElementById('at-ampm').value;
+  const parts = raw.split(':');
+  let h = parseInt(parts[0]) || 0;
+  const m = parseInt(parts[1]) || 0;
+  if (ampm === 'AM') { if (h === 12) h = 0; }
+  else { if (h !== 12) h += 12; }
+  h = Math.min(h, 23); const mm = Math.min(m, 59);
+  return `${String(h).padStart(2,'0')}:${String(mm).padStart(2,'0')}`;
+}
+
+function setTimeInput(val) {
+  if (TIME_FMT === '24h') {
+    document.getElementById('at-time').value = val || '';
+    return;
+  }
+  if (!val) {
+    document.getElementById('at-time-hhmm').value = '';
+    document.getElementById('at-ampm').value = 'AM';
+    return;
+  }
+  const [h, m] = val.split(':').map(Number);
+  const ampm = h >= 12 ? 'PM' : 'AM';
+  const h12  = h % 12 || 12;
+  document.getElementById('at-time-hhmm').value = `${h12}:${String(m).padStart(2,'0')}`;
+  document.getElementById('at-ampm').value = ampm;
+}
+
+function clearTimeInput() {
+  document.getElementById('at-time').value = '';
+  document.getElementById('at-time-hhmm').value = '';
+  document.getElementById('at-ampm').value = 'AM';
 }
 
 // ═══════════════════════ LOCK SCREEN ═════════════════════════
@@ -1130,7 +1247,7 @@ function openAddTask() {
   document.getElementById('modal-title-text').textContent = 'Nueva tarea';
   document.getElementById('at-title').value = '';
   document.getElementById('at-date').value  = TODAY;
-  document.getElementById('at-time').value  = '';
+  clearTimeInput();
   document.getElementById('at-cat').value   = 'Universidad';
   document.getElementById('at-pri').value   = 'media';
   document.getElementById('at-error').textContent = '';
@@ -1144,7 +1261,7 @@ function closeAddTask() {
 async function submitTask() {
   const title = document.getElementById('at-title').value.trim();
   const date  = document.getElementById('at-date').value;
-  const time  = document.getElementById('at-time').value;
+  const time  = getTimeInput();
   const cat   = document.getElementById('at-cat').value;
   const pri   = document.getElementById('at-pri').value;
   const errEl = document.getElementById('at-error');
@@ -1182,6 +1299,7 @@ async function submitTask() {
 (function init(){
   checkAccess();
   loadTheme();
+  loadTimeFmt();
   const greet = NOW_H<12?"Buenos días":NOW_H<19?"Buenas tardes":"Buenas noches";
   document.getElementById("greeting").innerHTML=`${greet}, <em>Luis</em> 👋`;
   const d = new Date(TODAY+"T12:00:00");
@@ -1214,7 +1332,7 @@ async function submitTask() {
         if(d<130){
           cx.beginPath(); cx.moveTo(pts[i].x,pts[i].y); cx.lineTo(pts[j].x,pts[j].y);
           const a=(1-d/130);
-          cx.strokeStyle=light?`rgba(0,136,196,${.07*a})`:`rgba(0,217,255,${.065*a})`;
+          cx.strokeStyle=light?`rgba(67,97,238,${.06*a})`:`rgba(0,217,255,${.065*a})`;
           cx.lineWidth=.5; cx.stroke();
         }
       }
@@ -1223,7 +1341,7 @@ async function submitTask() {
       p.x+=p.vx;p.y+=p.vy;
       if(p.x<0)p.x=W;if(p.x>W)p.x=0;if(p.y<0)p.y=H;if(p.y>H)p.y=0;
       cx.beginPath();cx.arc(p.x,p.y,p.r,0,Math.PI*2);
-      cx.fillStyle=light?"rgba(80,90,170,0.2)":"rgba(185,195,235,0.28)";
+      cx.fillStyle=light?"rgba(67,97,238,0.12)":"rgba(185,195,235,0.28)";
       cx.fill();
     });
     requestAnimationFrame(draw);
